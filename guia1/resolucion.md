@@ -273,4 +273,52 @@ def distanciaMaxima(nodoAct:Nodo, arbolBinario:ArbolBinario)->tuple[int, int]:
     return h_actual, max(c_izq, c_der, cruzado)
 ```
 
+# Ejercicio 11
+
+```python
+def merge(array_izq:list[int], array_der:list[int])->tuple[list[int], int]:
+
+    k = t = 0
+
+    largo_izq:int = len(array_izq)
+    largo_der:int = len(array_der)
+
+    mergeados:list[int] = []
+
+    cant_p_desorden:int = 0 
+    while k < largo_izq and t < largo_der:
+        if array_izq[k] <= array_der[t]:
+            mergeados.append(array_izq[k])
+            k += 1
+        else:
+            cant_p_desorden += largo_izq - k
+            mergeados.append(array_der[t])
+            t += 1
+
+    mergeados += array_izq[k:]
+    mergeados += array_der[t:]
+        
+    return mergeados, cant_p_desorden
+
+def desordenSort(array:list[int])->tuple[list[int], int]:
+
+    largo = len(array)
+
+    # Conquer
+    if largo <= 1:
+        return array, 0
+    
+    # Divide
+    mitad:int = largo // 2
+    array_izq, cant_izq = desordenSort(array[:mitad])
+    array_der, cant_der = desordenSort(array[mitad:])
+    
+    # Combine
+    array, cant_merge = merge(array_izq, array_der)
+
+    # Conquer
+    return array, cant_izq + cant_der + cant_merge
+```
+
+# Ejercicio 12
 

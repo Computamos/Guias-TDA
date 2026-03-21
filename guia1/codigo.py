@@ -310,6 +310,63 @@ def distanciaMaxima(nodoAct:Nodo)->tuple[int, int]:
 # raiz = armar_arbol_binario(100)
 # input(f"bruto={distanciaMaxima_bruto(raiz)}, D&C={distanciaMaxima(raiz)}")
 
+def desordenSort_bruto(array:list[int])->int:
+
+    largo = len(array)
+    desordenados:int = 0
+    for i in range(largo):
+        for j in range(i+1, largo):
+            if array[i] > array[j]:
+                desordenados += 1
+
+    return desordenados
+
+def merge(array_izq:list[int], array_der:list[int])->tuple[list[int], int]:
+
+    k = t = 0
+
+    largo_izq:int = len(array_izq)
+    largo_der:int = len(array_der)
+
+    mergeados:list[int] = []
+
+    cant_p_desorden:int = 0 
+    while k < largo_izq and t < largo_der:
+        if array_izq[k] <= array_der[t]:
+            mergeados.append(array_izq[k])
+            k += 1
+        else:
+            cant_p_desorden += largo_izq - k
+            mergeados.append(array_der[t])
+            t += 1
+
+    mergeados += array_izq[k:]
+    mergeados += array_der[t:]
+        
+    return mergeados, cant_p_desorden
+
+def desordenSort(array:list[int])->tuple[list[int], int]:
+
+    largo = len(array)
+
+    # Conquer
+    if largo <= 1:
+        return array, 0
+    
+    # Divide
+    mitad:int = largo // 2
+    array_izq, cant_izq = desordenSort(array[:mitad])
+    array_der, cant_der = desordenSort(array[mitad:])
+    
+    # Combine
+    array, cant_merge = merge(array_izq, array_der)
+
+    # Conquer
+    return array, cant_izq + cant_der + cant_merge
+
+# array:list[int] = [3, 7, 1, 2, 5]
+# input(desordenSort_bruto(array))
+
 def testear_todo(cant_test_por_ejercicio:int = 100):
     
     ancho, _ = get_terminal_size()
@@ -461,6 +518,26 @@ def testear_todo(cant_test_por_ejercicio:int = 100):
             
         return True
 
+    def t_desordenSort()->bool:
+
+        for _ in range(cant_test_por_ejercicio):
+
+            tamanio_array:int = randint(1, 3000)
+            
+            arreglo_temp:list[int] = []
+            for _ in range(tamanio_array):
+                arreglo_temp.append(randint(-1000000, 1000000))
+            
+            res_bruto:int = desordenSort_bruto(arreglo_temp)
+            _, res_ejer = desordenSort(arreglo_temp)
+            
+            paso:bool = res_bruto == res_ejer
+            if not paso:
+                print(res_bruto, res_ejer)
+                return False
+            
+        return True
+
     tests:list[Callable] = [
         t_izquierdaDominante, 
         t_indiceEspejo, 
@@ -468,7 +545,8 @@ def testear_todo(cant_test_por_ejercicio:int = 100):
         t_maximoMontania,
         t_maximaSubsecuencia,
         t_potenciaSum,
-        t_distanciaMaxima
+        t_distanciaMaxima,
+        t_desordenSort,
         ]
 
     print(divisor_en)
