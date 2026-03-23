@@ -129,11 +129,13 @@ def potenciaLogaritmica(base:int, potencia:int)->int:
     potencia_en_par:int = potencia // 2
     otro_calculo:int = potenciaLogaritmica(base, potencia_en_par)
     
+    res:int = otro_calculo * otro_calculo
+
     # Combine
     if potencia % 2 == 1:
-        return base * potenciaLogaritmica(base, potencia - 1)
+        return base * res
 
-    return otro_calculo * otro_calculo
+    return res
 ```
 
 El algoritmo se divide en un solo subproblema (pues solo vemos una sola rama en el divide) de tamaño $n/2$ pues dividimos a la potencia en 2, finalmente el combine cuesta 1 y llegamos a que tenemos la siguiente fuinción de recursión $T(n)=1*T(n/2)+1$ que por el tercer caso del teorema maestro tenemos que la complejidad es $O(log(n))$ si tomamos $k=0$
