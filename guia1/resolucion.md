@@ -322,3 +322,148 @@ def desordenSort(array:list[int])->tuple[list[int], int]:
 
 # Ejercicio 12
 
+### 1.
+```python
+from pprint import pprint
+from random import randint
+
+
+def armar_matriz_booleana(cant_filas: int) -> list[list[bool]]:
+
+    matriz: list[list[bool]] = []
+    cant_bools: dict[bool, int] = {True: 0, False: 0}
+    for _ in range(cant_filas):
+        fila: list[bool] = []
+        for _ in range(cant_filas):
+            valor: bool = bool(randint(0, 1))
+            cant_bools[valor] += 1
+            fila.append(valor)
+
+        matriz.append(fila)
+
+    if cant_bools[False] == 0: # Forzamos que haya un False (por consigna)
+        i: int = randint(0, cant_filas - 1)
+        j: int = randint(0, cant_filas - 1)
+        matriz[i][j] = False
+
+    return matriz
+
+
+def conjuncionSubmatriz(
+    i_0: int, i_1: int, j_0: int, j_1: int, matriz: list[list[bool]]
+) -> bool:
+
+    for i in range(i_0, i_1):
+        for j in range(j_0, j_1):
+            if not matriz[i][j]: # if matriz[i][j] == False
+                return False
+
+    return True
+
+
+def cazadorDeFalsos(
+    i_0: int, i_1: int, j_0: int, j_1: int, matriz: list[list[bool]]
+) -> tuple[int, int]:
+
+    # Conquer
+    if i_1 - i_0 == 1 and j_1 - j_0 == 1:
+        if not matriz[i_0][j_0]: # if matriz[i][j] == False
+            return (i_0, j_0)
+        return None
+
+    # Divide
+    mitad_filas: int = (i_1 + i_0) // 2
+    mitad_columnas: int = (j_1 + j_0) // 2
+
+    mitades = (
+        (i_0, mitad_filas, j_0, mitad_columnas),
+        (mitad_filas, i_1, j_0, mitad_columnas),
+        (i_0, mitad_filas, mitad_columnas, j_1),
+        (mitad_filas, i_1, mitad_columnas, j_1),
+    )
+
+    # Combine
+    for mitad in mitades:
+        i, i_, j, j_ = mitad
+        if not conjuncionSubmatriz(i, i_, j, j_, matriz):
+            return cazadorDeFalsos(i, i_, j, j_, matriz)
+```
+
+Para justificar la complejidad temporal de este algoritmo haremos uso del teorema maestro. 
+
+Definimos entonces nuestra función $T(n\times n) = a*T(\frac{n\times n}{c}) + f(n\times n)$, para tratarlas en terminos de $n$ vamos a definirla mejor como $T(n)=a*T(\frac{n}{(\frac{c}{2})}) + f(n)$; en nuestro algoritmo dividimos al problema en 1 subproblema de tamaño $\frac{n \times n}{4}$, por lo tanto tendríamos que en nuestra función $T$ podemos reemplazar por $a=1$ y $c=4$ respectivamente, luego tenemos que el costo de dividir es $O(1)$ pues son todas operaciones elementales, el costo de verificar si hay un falso en la submatriz es $O(1)$ porque podemos asumir que $conjuncionSubmatriz$ tiene dicha complejidad, y -finalmente- el costo de combinar también es $O(1)$ porque solo devolvemos el resultado de una de las submatrices sin importar las de las demás y porque solo hacemos recursión en una de las **cuatro** mitades en la que dividimos a la submatriz; el conquer también tiene costo $O(1)$. Nuestra función de recursión nos queda entonces definida como $T(n) = 1*T(\frac{n}{2}) + O(1)$ que por el teorema maestro tiene complejidad temporal de $O(\log{(n)})$ por el tercer caso.
+
+
+### 2.
+
+```python
+from pprint import pprint
+from random import randint
+
+
+def armar_matriz_booleana(cant_filas: int) -> list[list[bool]]:
+
+    matriz: list[list[bool]] = []
+    cant_bools: dict[bool, int] = {True: 0, False: 0}
+    for _ in range(cant_filas):
+        fila: list[bool] = []
+        for _ in range(cant_filas):
+            valor: bool = bool(randint(0, 1))
+            cant_bools[valor] += 1
+            fila.append(valor)
+
+        matriz.append(fila)
+
+    if cant_bools[False] == 0: # Forzamos que haya un False (por consigna)
+        i: int = randint(0, cant_filas - 1)
+        j: int = randint(0, cant_filas - 1)
+        matriz[i][j] = False
+
+    return matriz
+
+
+def conjuncionSubmatriz(
+    i_0: int, i_1: int, j_0: int, j_1: int, matriz: list[list[bool]]
+) -> bool:
+
+    for i in range(i_0, i_1):
+        for j in range(j_0, j_1):
+            if not matriz[i][j]: # if matriz[i][j] == False
+                return False
+
+    return True
+
+
+def cazadorDeFalsosContador(
+    i_0: int, i_1: int, j_0: int, j_1: int, matriz: list[list[bool]]
+) -> tuple[int, int]:
+
+    # Conquer
+    if i_1 - i_0 == 1 and j_1 - j_0 == 1:
+        res:int = 0
+        if not matriz[i_0][j_0]: # if matriz[i][j] == False
+            res += 1
+        return res
+
+    # Divide
+    mitad_filas: int = (i_1 + i_0) // 2
+    mitad_columnas: int = (j_1 + j_0) // 2
+
+    mitades = (
+        (i_0, mitad_filas, j_0, mitad_columnas),
+        (mitad_filas, i_1, j_0, mitad_columnas),
+        (i_0, mitad_filas, mitad_columnas, j_1),
+        (mitad_filas, i_1, mitad_columnas, j_1),
+    )
+
+    # Combine
+    contador: int = 0
+    for mitad in mitades:
+        i, i_, j, j_ = mitad
+        if not conjuncionSubmatriz(i, i_, j, j_, matriz):
+            contador += cazadorDeFalsosContador(i, i_, j, j_, matriz)
+
+    return contador
+```
+
+En nuestro algoritmo podemos llegar a tener que realizar una busqueda de False en cada cuadrante porque sabemos que solo van a haber 5 False en toda la matriz (el peor caso sería si repartimos los 5 False en entre cada cuadrante de la matriz), sin embargo, al revisar cada cuadrante realizaríamos una búsqueda logarítmica en la submatriz de ese cuadrante pues tendríamos **a lo sumo** dos False en esa submatriz y solo vamos a ver los subcuadrantes de esa submatriz en caso de que haya efectivamente un False (esto de asumir que $conjuncionSubmatriz$ tiene complejidad $O(1)$), la justificacion completa está en el inciso 1; en otras palabras: si tenemos a lo sumo 5 False, entonces **a lo sumo** tenemos que revisar cada cuadrante de la matriz de entrada, que a su vez tienen otros subcuadrantes que **a lo sumo** tienen 2 False, realizar la busqueda de esos False en cada cuadrante de la matriz de entrada tiene complejidad $O(\log{(n)})$ pues solo revisamos a los subcuadrantes que tienen un False. Formalmente, si definimos $T(n) = 1*T(n/2) + O(1)$ como el tiempo total del algoritmo asociada a contar los False que están en cada cuadrante de la función original, entonces la complejidad final de nuestro algoritmo sería $O(5*O(T(n)))=O(5*\log{(n)})=O(\log{(n)})$

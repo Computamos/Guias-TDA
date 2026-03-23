@@ -1,4 +1,5 @@
 from typing import Callable
+from pprint import pprint
 from time import perf_counter
 from shutil import get_terminal_size
 from math import inf
@@ -367,6 +368,123 @@ def desordenSort(array:list[int])->tuple[list[int], int]:
 # array:list[int] = [3, 7, 1, 2, 5]
 # input(desordenSort_bruto(array))
 
+def armar_matriz_booleana(cant_filas: int) -> list[list[bool]]:
+
+    matriz: list[list[bool]] = []
+    cant_bools: dict[bool, int] = {True: 0, False: 0}
+    for _ in range(cant_filas):
+        fila: list[bool] = []
+        for _ in range(cant_filas):
+            valor: bool = bool(randint(0, 1))
+            cant_bools[valor] += 1
+            fila.append(valor)
+
+        matriz.append(fila)
+
+    if cant_bools[False] == 0: # Forzamos que haya un False (por consigna)
+        i: int = randint(0, cant_filas - 1)
+        j: int = randint(0, cant_filas - 1)
+        matriz[i][j] = False
+
+    return matriz
+
+
+def conjuncionSubmatriz(
+        i_0: int, i_1: int, j_0: int, j_1: int, matriz: list[list[bool]]
+) -> bool:
+
+    for i in range(i_0, i_1):
+        for j in range(j_0, j_1):
+            if not matriz[i][j]: # if matriz[i][j] == False
+                return False
+
+    return True
+
+
+def cazadorDeFalsos(
+        i_0: int, i_1: int, j_0: int, j_1: int, matriz: list[list[bool]]
+) -> tuple[int, int]:
+
+    # Conquer
+    if i_1 - i_0 == 1 and j_1 - j_0 == 1:
+        if not matriz[i_0][j_0]: # if matriz[i_0][j_0] == False
+            return (i_0, j_0)
+        return None
+
+    # Divide
+    mitad_filas: int = (i_1 + i_0) // 2
+    mitad_columnas: int = (j_1 + j_0) // 2
+
+    mitades = (
+        (i_0, mitad_filas, j_0, mitad_columnas),
+        (mitad_filas, i_1, j_0, mitad_columnas),
+        (i_0, mitad_filas, mitad_columnas, j_1),
+        (mitad_filas, i_1, mitad_columnas, j_1),
+    )
+
+    # Combine
+    for mitad in mitades:
+        i, i_, j, j_ = mitad
+        if not conjuncionSubmatriz(i, i_, j, j_, matriz):
+            return cazadorDeFalsos(i, i_, j, j_, matriz)
+
+
+# cant_filas: int = 4
+# matriz: list[list[bool]] = armar_matriz_booleana(cant_filas)
+
+# pprint(matriz, indent=2)
+# input(cazadorDeFalsos(0, cant_filas, 0, cant_filas, matriz))
+
+
+def cazadorDeFalsosContador_bruto(matriz: list[list[bool]]) -> tuple[int, int]:
+    largo = len(matriz)
+    contador: int = 0
+    for i in range(largo):
+        for j in range(largo):
+            if not matriz[i][j]: # if matriz[i][j] == False
+                contador += 1
+
+    return contador
+
+
+def cazadorDeFalsosContador(
+    i_0: int, i_1: int, j_0: int, j_1: int, matriz: list[list[bool]]
+) -> tuple[int, int]:
+
+    # Conquer
+    if i_1 - i_0 == 1 and j_1 - j_0 == 1:
+        res:int = 0
+        if not matriz[i_0][j_0]: # if matriz[i_0][j_0] == False
+            res += 1
+        return res
+
+    # Divide
+    mitad_filas: int = (i_1 + i_0) // 2
+    mitad_columnas: int = (j_1 + j_0) // 2
+
+    mitades = (
+        (i_0, mitad_filas, j_0, mitad_columnas),
+        (mitad_filas, i_1, j_0, mitad_columnas),
+        (i_0, mitad_filas, mitad_columnas, j_1),
+        (mitad_filas, i_1, mitad_columnas, j_1),
+    )
+
+    # Combine
+    contador: int = 0
+    for mitad in mitades:
+        i, i_, j, j_ = mitad
+        if not conjuncionSubmatriz(i, i_, j, j_, matriz):
+            contador += cazadorDeFalsosContador(i, i_, j, j_, matriz)
+
+    return contador
+
+
+# cant_filas: int = 4
+# matriz: list[list[bool]] = armar_matriz_booleana(cant_filas)
+
+# pprint(matriz, indent=2)
+# input(cazadorDeFalsosContador(0, cant_filas, 0, cant_filas, matriz))
+
 def testear_todo(cant_test_por_ejercicio:int = 100):
     
     ancho, _ = get_terminal_size()
@@ -538,6 +656,35 @@ def testear_todo(cant_test_por_ejercicio:int = 100):
             
         return True
 
+    def t_cazadorDeFalsos():
+
+        for _ in range(cant_test_por_ejercicio):
+
+            n: int = randint(1, 500)
+            matriz: list[list[int]] = armar_matriz_booleana(n)
+
+            i_res, j_res = cazadorDeFalsos(0, n, 0, n, matriz)
+
+            if matriz[i_res][j_res]: # if matriz[i_res][j_res] == False
+                return False
+
+        return True
+
+    def t_cazadorDeFalsosContador():
+        for _ in range(cant_test_por_ejercicio):
+
+            n: int = randint(1, 500)
+            matriz: list[list[int]] = armar_matriz_booleana(n)
+
+            res_bruto: int = cazadorDeFalsosContador_bruto(matriz)
+            res_ejer: int = cazadorDeFalsosContador(0, n, 0, n, matriz)
+
+            paso: bool = res_bruto == res_ejer
+            if not paso:
+                return False
+
+        return True
+
     tests:list[Callable] = [
         t_izquierdaDominante, 
         t_indiceEspejo, 
@@ -547,6 +694,8 @@ def testear_todo(cant_test_por_ejercicio:int = 100):
         t_potenciaSum,
         t_distanciaMaxima,
         t_desordenSort,
+        t_cazadorDeFalsos,
+        t_cazadorDeFalsosContador,
         ]
 
     print(divisor_en)
