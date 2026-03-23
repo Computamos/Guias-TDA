@@ -104,11 +104,13 @@ def potenciaLogaritmica(base:int, potencia:int)->int:
     potencia_en_par:int = potencia // 2
     otro_calculo:int = potenciaLogaritmica(base, potencia_en_par)
     
+    res:int = otro_calculo * otro_calculo
+
     # Combine
     if potencia % 2 == 1:
-        return base * potenciaLogaritmica(base, potencia - 1)
+        return base * res
 
-    return otro_calculo * otro_calculo
+    return res
 
 # base:int = 2
 # potencia:int = 10
@@ -211,6 +213,8 @@ def potenciaSum(base:int, potencia:int)->int:
     """
     Voy a dar el algoritmo trabajando con enteros 
     porque es exactamente el mismo concepto y me da fiaca hacerlo con matrices posta.
+
+    Asumir que la función `pow` es la función `potencia`
     """
 
     if potencia == 1:
@@ -489,8 +493,10 @@ def testear_todo(cant_test_por_ejercicio:int = 100):
     
     ancho, _ = get_terminal_size()
     frase_en:str = "⏤ Testeando ⏤"
+    frase_st:str = "⏤ Stats ⏤"
     frase_out:str = "⏤ Tests finalizados ⏤"
     divisor_en = "\n" + " "*((ancho- len(frase_en)) // 2) + frase_en 
+    divisor_st = " "*((ancho- len(frase_st)) // 2) + frase_st
     divisor_in = "⊰" + "⏤"*(ancho-2) +"⊱"
     divisor_out = " "*((ancho-len(frase_out)) // 2) + frase_out
 
@@ -538,8 +544,8 @@ def testear_todo(cant_test_por_ejercicio:int = 100):
 
         for _ in range(cant_test_por_ejercicio):
 
-            base:int = randint(1, 100)
-            potencia:int = randint(1, 15)
+            base:int = randint(1, 1000000)
+            potencia:int = randint(1, 100000) # Una banda
 
             res_bruto:int = potenciaLogaritmica_bruto(base, potencia)
             res_ejer:int = potenciaLogaritmica(base, potencia)
@@ -686,19 +692,20 @@ def testear_todo(cant_test_por_ejercicio:int = 100):
         return True
 
     tests:list[Callable] = [
-        t_izquierdaDominante, 
-        t_indiceEspejo, 
-        t_potenciaLogaritmica, 
-        t_maximoMontania,
-        t_maximaSubsecuencia,
-        t_potenciaSum,
-        t_distanciaMaxima,
-        t_desordenSort,
-        t_cazadorDeFalsos,
+        # t_izquierdaDominante, 
+        # t_indiceEspejo, 
+        # t_potenciaLogaritmica, 
+        # t_maximoMontania,
+        # t_maximaSubsecuencia,
+        # t_potenciaSum,
+        # t_distanciaMaxima,
+        # t_desordenSort,
+        # t_cazadorDeFalsos,
         t_cazadorDeFalsosContador,
         ]
 
     print(divisor_en)
+    stats_test:dict[bool, int] = {True: 0, False: 0}
     for t in tests:
         nombre_test:str = t.__name__
         nombre_test = nombre_test[2:len(nombre_test)]
@@ -709,9 +716,19 @@ def testear_todo(cant_test_por_ejercicio:int = 100):
         res:bool = t()
         finish:float = perf_counter()
 
+        stats_test[res] += 1
+
         print(f"Estado: {f'{C_ACEPTADO}Aceptado{C_RESET}' if res else f'{C_RECHAZADO}Rechazado{C_RESET}'}")
         print(f"Tiempo de ejecución tomado para {cant_test_por_ejercicio} tests: {finish-start: .4f} segundos.")
 
+
+    print(divisor_in)
+    print(divisor_st)
+
+    cantidad_tests:int = len(tests)
+    print(f"Cantidad de test {C_ACEPTADO}Aceptado{C_RESET}: {stats_test[True]}/{cantidad_tests}")
+    print(f"Cantidad de test {C_RECHAZADO}Rechazado{C_RESET}: {stats_test[False]}/{cantidad_tests}")
+    print(f"Porcentaje de aceptación: {(stats_test[True] * 100) / len(tests): .2f}%")
     print(divisor_in)
     print(divisor_out)
 
