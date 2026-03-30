@@ -48,108 +48,6 @@ def contar_magiCuadrados_bruto(n):
 
     return contador
 
-# n:int = 5
-# input(contar_magiCuadrados_bruto(n))
-
-# usados: set = set()
-# cuadrado: list[list[int]] = []
-
-# def es_valido(i: int, j: int, n: int, suma_objetivo:int) -> bool:
-#     global cuadrado
-
-#     if suma_objetivo is None:
-#         return True
-
-#     # Fila i (parcial hasta columna j)
-#     suma_fila:int = 0
-#     for k in range(0, j+1):
-#         suma_fila += cuadrado[i][k]
-        
-#     if suma_fila > suma_objetivo:
-#         return False
-#     if j == n - 1 and suma_fila != suma_objetivo:   # fila completa
-#         return False
-
-#     # Columna j (parcial hasta fila i)
-#     suma_columna:int = 0
-#     for k in range(0, i+1):
-#         suma_columna += cuadrado[i][k]
-        
-#     if suma_columna > suma_objetivo:
-#         return False
-#     if j == n - 1 and suma_columna != suma_objetivo:   # fila completa
-#         return False
-
-#     # Diagonal principal (solo si (i,j) pertenece a ella)
-#     if i == j:
-#         suma_diagonal_p = 0
-#         for k in range(0, i+1):
-#             suma_diagonal_p += cuadrado[k][k]
-#         if suma_diagonal_p > suma_objetivo:
-#             return False
-#         if i == n - 1 and suma_diagonal_p != suma_objetivo: # diagonal completa
-#             return False
-
-#     # Diagonal secundaria (solo si (i,j) pertenece a ella)
-#     if i + j == n - 1:
-#         suma_diagonal_s:int = 0
-#         for k in range(0, i+1):
-#             suma_diagonal_s += cuadrado[k][n - 1 - k]
-#         if suma_diagonal_s > suma_objetivo:
-#             return False
-#         if i == n - 1 and suma_diagonal_s != suma_objetivo: # diagonal completa
-#             return False
-
-#     return True
-
-# def magiCuadrados(i: int, j: int, n: int, suma_objetivo) -> int:
-#     global usados, cuadrado
-
-#     if i == n: # todas las filas completas → cuadrado mágico encontrado
-#         return 1
-
-#     # Siguiente posición en orden fila por fila
-#     i_sig = i
-#     j_sig = j
-
-#     if j < n - 1:
-#         j += 1
-#     else:
-#         i_sig += 1 
-#         j_sig = 0
-
-#     cant_cuadrados_encontrados = 0
-#     for valor in range(1, pow(n, 2) + 1):
-        
-#         if valor in usados:
-#             continue
-
-#         usados.add(valor)
-#         cuadrado[i][j] = valor
-
-#         # ── Punto clave ──────────────────────────────────────────────────────
-#         # Al colocar el último elemento de la primera fila, la suma de esa
-#         # fila se convierte en la suma objetivo para todo el cuadrado.
-#         # Antes de eso, suma_objetivo es None (sin restricción de suma aún).
-        
-#         nueva_suma = suma_objetivo
-#         if i == 0 and j == n - 1:
-#             nueva_suma = sum(cuadrado[0])
-
-#         if es_valido(i, j, n, nueva_suma):
-#             cant_cuadrados_encontrados += magiCuadrados(i_sig, j_sig, n, nueva_suma)
-
-#         usados.remove(valor)
-#         cuadrado[i][j] = 0
-
-#     return cant_cuadrados_encontrados
-
-# def contarMagiCuadrados(n: int) -> int:
-#     global cuadrado, usados
-#     usados = set()                              # ← reinicio obligatorio
-#     cuadrado = [[0] * n for _ in range(n)]
-#     return magiCuadrados(0, 0, n, None)        # empieza sin suma conocida
-
 usados: set = set()
 cuadrado: list[list[int]] = []
 
@@ -351,22 +249,42 @@ def contarMagiCuadrados(n: int) -> int:
 # n:int = 3
 # input(contarMagiCuadrados(n))
 
-def maxiSubconjunto(matriz:list[list[int]], I:set[int], n:int, k:int)->int:
+def maxiSubconjunto_posta(matriz:list[list[int]], I:set[int], inicio:int, n:int, k:int, I_mejor_actual:set[int], sum_mejor_actual:int)->tuple[set, int]:
     
     if k == 0:
         acc:int = 0
-        for i in range(0, k+1):
-            for k in range(i, k+1):
-                acc += matriz[i][k]
-        return acc
+        for valor in I:
+            for valor_2 in I:
+                acc += matriz[valor][valor_2]
+        if acc >= sum_mejor_actual:
+            return I.copy(), acc
+        return I_mejor_actual, sum_mejor_actual
 
-    resultados:list[int] = []
-    for valor in range(1, n):
-        if valor not in I:
-            I.add(valor)
-            resultados.append(maxiSubconjunto(matriz, I, k-1))
-            I.remove(valor)
-    return max(resultados)
+    for valor in range(inicio, n):
+        I.add(valor)
+        parc_mejor, parc_sum_mejor = maxiSubconjunto_posta(matriz, I, valor+1, n, k-1, I_mejor_actual, sum_mejor_actual)
+        if parc_sum_mejor > sum_mejor_actual:
+            I_mejor_actual = parc_mejor.copy()
+            sum_mejor_actual = parc_sum_mejor
+        I.remove(valor)
+
+    return I_mejor_actual, sum_mejor_actual
+
+def maxiSubconjunto(matriz:list[list[int]], k:int)->set:
+    conj, _ = maxiSubconjunto_posta(matriz, set(), 0, len(matriz), k, set(), 0)
+    res:set = set()
+    for elem in conj:
+        res.add(elem+1)
+    return res
+
+matriz = [
+    [0, 10, 10, 1],
+    [10, 0, 5, 2],
+    [10, 5, 0, 1],
+    [1, 2, 1, 0]
+]
+k = 3
+input(maxiSubconjunto(matriz, k)) 
 
 def testear_todo(cant_test_por_ejercicio:int = 100):
 
