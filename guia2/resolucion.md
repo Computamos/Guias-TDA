@@ -413,18 +413,193 @@ def contarMagiCuadrados(n: int) -> int:
 1. 
 
 ```python
-def maxiSubconjunto(matriz:list[list[int]], I:set[int], k:int)->int:
+def maxiSubconjunto_posta(matriz:list[list[int]], I:set[int], inicio:int, n:int, k:int, I_mejor_actual:set[int], sum_mejor_actual:int)->tuple[set, int]:
+    
     if k == 0:
         acc:int = 0
-        for i in range(0, k+1):
-            for k in range(i, k+1):
-                acc += matriz[i][k]
+        for valor in I:
+            for valor_2 in I:
+                acc += matriz[valor][valor_2]
+        if acc >= sum_mejor_actual:
+            return I.copy(), acc
+        return I_mejor_actual, sum_mejor_actual
+
+    for valor in range(inicio, n):
+        I.add(valor)
+        parc_mejor, parc_sum_mejor = maxiSubconjunto_posta(matriz, I, valor+1, n, k-1, I_mejor_actual, sum_mejor_actual)
+        if parc_sum_mejor > sum_mejor_actual:
+            I_mejor_actual = parc_mejor.copy()
+            sum_mejor_actual = parc_sum_mejor
+        I.remove(valor)
+
+    return I_mejor_actual, sum_mejor_actual
+
+def maxiSubconjunto(matriz:list[list[int]], k:int)->set:
+    conj, _ = maxiSubconjunto_posta(matriz, set(), 0, len(matriz), k, set(), 0)
+    res:set = set()
+    for elem in conj:
+        res.add(elem+1)
+    return res
+```
+Una solución candidata se codifica al armar el subconjunto de tamaño k que tiene alguno número en el rango 1 a n, como queremos todos los subconjuntos entonces vamos a tener un total de n_combinatorio(n, k) soluciones candidatas, la cantidad de soluciones válidas (en términos de conjuntos) es una, y es aquella que tenga tamaño k y que maximice $\sum_{i,j \in I}{M[i][j]}$; una solución parcial es aquella que tenga tamaño menor o igual a k y se extiende su valor agregando un número que no se encuentre actualmente en ella.
+
+2. 
+```python
+def maxiSubconjunto_posta(matriz:list[list[int]], I:set[int], inicio:int, n:int, k:int, I_mejor_actual:set[int], sum_mejor_actual:int)->tuple[set, int]:
+    
+    if k == 0: # O(k^2)
+        acc:int = 0 
+        for valor in I: # O(k^2)
+            for valor_2 in I:
+                acc += matriz[valor][valor_2]
+        if acc >= sum_mejor_actual:
+            return I.copy(), acc
+        return I_mejor_actual, sum_mejor_actual
+
+    for valor in range(inicio, n): # n_combinatorio(n, k) * k^2 = O(n_comb(n k) * k^2)
+        I.add(valor)
+        parc_mejor, parc_sum_mejor = maxiSubconjunto_posta(matriz, I, valor+1, n, k-1, I_mejor_actual, sum_mejor_actual)
+        if parc_sum_mejor > sum_mejor_actual:
+            I_mejor_actual = parc_mejor.copy()
+            sum_mejor_actual = parc_sum_mejor
+        I.remove(valor)
+
+    return I_mejor_actual, sum_mejor_actual
+
+def maxiSubconjunto(matriz:list[list[int]], k:int)->set: # O(n_combinatorio(n, k) * k^2)
+    conj, _ = maxiSubconjunto_posta(matriz, set(), 0, len(matriz), k, set(), 0) # O(n_comb(n k) * k^2)
+    res:set = set()
+    for elem in conj: # O(k)
+        res.add(elem+1)
+    return res
+```
+
+La complejidad temporal es $O(\binom{n}{k} \times k^2)$, porque estoy revisando todos los subconjunto s de tamaño k en búsqueda de aquel que maximice $\sum_{i,j \in I}{M[i][j]}$ y en el caso base realizo una cuenta de complejidad temporal $O(k^2)$. 
+
+La complejidad espacial es $O(k)$ porque estoy haciendo backtracking y al tener un conjunto de tamaño $k$ entonces solo me almaceno en memoria a **ese** subconjunto, luego si durante la recursión encuentro un subconjunto más óptimo que el que ya encontré entonces solo lo reemplazo.
+
+3. 
+
+Una poda por optimalidad sería la de chequear en cada nuevo nodo si la suma acumulada hasta ese nodo más la suma del mayor valor posible de la matriz repetido $k^2$ veces es mayor estricto que la mejor suma encontrada hasta ese momento. 
+
+O sea, si asumimos que $1 \leq |I| \lt k$ queremos ver que 
+
+$(\sum_{i, j \in I}{M[i][j]}) + k^2 * max_{1 \leq i,j \leq n}\{M[i][j]\} \leq sumMejorActual$ 
+
+pues hasta la profundidad $k$ del árbol de backtracking aún podemos agregar $k - |I|$ elementos al conjunto $I$, si asumimos que agregamos $k$ elementos y que cada uno de ellos aporta el mayor valor posible, entonces podemos acotar superiormente por $k^2$ pues podríamos armar esa cantidad de pares aún, si asumimos que los armamos todos y que cada uno nos da la mejor sumatoria posible, entonces tendríamos una cota superior válida (optimista) para usar como poda por optimalidad.
+
+```python
+def maxiSubconjunto_posta(matriz:list[list[int]], I:set[int], inicio:int, n:int, k:int, I_mejor_actual:set[int], sum_mejor_actual:int, n_maximo:int)->tuple[set, int]:
+    
+
+    suma_actual:int = 0
+    for valor in I:
+        for valor_2 in I:
+            suma_actual += matriz[valor][valor_2]
+
+    if suma_actual + (k * k) * n_maximo <= sum_mejor_actual:
+        return I_mejor_actual, sum_mejor_actual
+    
+    if k == 0: # O(k^2)
+        acc:int = 0 
+        for valor in I: # O(k^2)
+            for valor_2 in I:
+                acc += matriz[valor][valor_2]
+        if acc >= sum_mejor_actual:
+            return I.copy(), acc
+        return I_mejor_actual, sum_mejor_actual
+
+    for valor in range(inicio, n): # n_combinatorio(n, k) * k^2 = O(n_comb(n k) * k^2)
+        I.add(valor)
+        parc_mejor, parc_sum_mejor = maxiSubconjunto_posta(matriz, I, valor+1, n, k-1, I_mejor_actual, sum_mejor_actual)
+        if parc_sum_mejor > sum_mejor_actual:
+            I_mejor_actual = parc_mejor.copy()
+            sum_mejor_actual = parc_sum_mejor
+        I.remove(valor)
+
+    return I_mejor_actual, sum_mejor_actual
+
+def maxiSubconjunto(matriz:list[list[int]], k:int)->set: # O(n_combinatorio(n, k) * k^2)
+    
+    n_maximo:int = 0
+    for fila in matriz:
+        n_maximo = max(n_maximo, max(fila)) 
+    
+    conj, _ = maxiSubconjunto_posta(matriz, set(), 0, len(matriz), k, set(), 0, n_maximo) # O(n_comb(n k) * k^2)
+    res:set = set()
+    for elem in conj: # O(k)
+        res.add(elem+1)
+    return res
+```
+
+# Ejercicio 4
+
+1. 
+
+```python
+def rutaMinima_posta(matriz:list[list[int]], n:int, pi_parc:list[int], largo_pi_parc:int, mejor_encontrado:int)->int:
+
+    if largo_pi_parc == n:
+        acc:int = 0
+        for i in range(n-1):
+            pos = pi_parc[i]
+            pos_sig = pi_parc[i+1]
+            acc += matriz[pos][pos_sig]
+        acc += matriz[pi_parc[n-1]][pi_parc[0]]
         return acc
 
-    resultados:list[int] = []
-    for valor in range(1, n):
-        if valor not in I:
-            I.add(valor)
-            resultados.append(maxiSubconjunto(matriz, I, k-1))
-    return max(resultados)
+    for i in range(n):
+        if i not in pi_parc:
+            pi_parc.append(i)
+            mejor_encontrado = min(mejor_encontrado, rutaMinima_posta(matriz, n, pi_parc, largo_pi_parc +1, mejor_encontrado))
+            pi_parc.pop()
+    
+    return mejor_encontrado
+
+def rutaMinima(matriz:list[list[int]])->int:
+    return rutaMinima_posta(matriz, len(matriz), [], 0, inf)
+```
+
+Una solución candidata se codifica armando una permutación para una tupla con los números de 1 a $n$ (sin repetidos). Una solución válida es aquella solucion candidata que minimiza $D_{\pi(n)\pi(1)} + \sum_{i=1}^{n-1}{D_{\pi(i)\pi(i+1)}}$ (el costo mínimo de viajar pasando por todas las ciudades al menos una vez y volver al punto de origen); una solución parcial es aquella permutación $\pi$ tal que $|\pi| \lt n$ y no tiene valores repetidos, se extiende agregando a la permutación un número en el rango 1 a $n$ tal que el número no se encuentre en esa permutación.
+
+2. 
+La complejidad temporal es $O(n\times n!)$ porque el algoritmo genera todas las permutaciones de tamaño $n$ (esto tiene costo $n!$), para cada una termina calculando su costo en tiempo lineal, por lo tanto la complejidad temporal final es $O(n\times n!)$
+
+La complejidad espacial es $O(n)$ porque la profundidad final del árbol es $n$ y el costo de la estructura para almacenar al mejor resultado es una lista de tamaño $n$.
+
+3. 
+
+Una poda por optimalidad podría ser la de establecer como cota inferior (en la k-ésima iteración)
+
+$min_{1 \leq i,j \leq n}\{{D[i][j]}\} * (n-k+1) + \sum_{i=1}^{k}{D_{\pi(i)\pi(i+1)}} \geq mejorEncontrado$
+
+pues estaríamos comparando entre asumir la comparación entre: asumir que todos las permutaciones posibles que pueden llegar a generarse a partir de los siguientes nodos van a tener un costo mínimo de viaje (tomando en cuenta que tenemos que volver al punto de inicio del viaje, por eso el +1); contra el mejor valor mínimo encontrado hasta el momento.
+
+```python
+def rutaMinima_posta(matriz:list[list[int]], n:int, pi_parc:list[int], largo_pi_parc:int, costo_pi_parc:int, mejor_encontrado:int, minimo_absoluto:int)->int:
+
+    if largo_pi_parc == n:
+        costo_pi_parc += matriz[pi_parc[n-1]][pi_parc[0]]
+        return costo_pi_parc
+
+    if minimo_absoluto * (n-largo_pi_parc+1) + costo_pi_parc >= mejor_encontrado:
+        return mejor_encontrado
+    
+    for i in range(n):
+        if i not in pi_parc:
+            nuevo_costo = costo_pi_parc
+            if largo_pi_parc > 0:
+                nuevo_costo += matriz[pi_parc[largo_pi_parc-1]][i]
+
+            pi_parc.append(i)
+            mejor_encontrado = min(mejor_encontrado, rutaMinima_posta(matriz, n, pi_parc, largo_pi_parc +1, nuevo_costo, mejor_encontrado, minimo_absoluto))
+            pi_parc.pop()
+    
+    return mejor_encontrado
+
+def rutaMinima(matriz:list[list[int]])->int:
+    minimo_absoluto:int = inf
+    for fila in matriz:
+        minimo_absoluto = min(minimo_absoluto, min(fila))
+    return rutaMinima_posta(matriz, len(matriz), [], 0, 0, inf, minimo_absoluto)
 ```

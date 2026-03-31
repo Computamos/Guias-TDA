@@ -1,10 +1,10 @@
 from typing import Callable
+from itertools import permutations, combinations
 from pprint import pprint
 from time import perf_counter
 from shutil import get_terminal_size
 from math import inf
 from random import randint, uniform
-from itertools import permutations
 
 
 def es_magico(cuadrado, n):
@@ -249,6 +249,28 @@ def contarMagiCuadrados(n: int) -> int:
 # n:int = 3
 # input(contarMagiCuadrados(n))
 
+def maxiSubconjunto_bruto(matriz: list[list[int]], k: int) -> set:
+    n = len(matriz)
+    
+    mejor_conjunto = set()
+    mejor_suma = float('-inf')
+    
+    # Genera TODOS los subconjuntos de tamaño k
+    for subconjunto in combinations(range(n), k):
+        
+        # Calcular suma doble (igual que tu función)
+        acc = 0
+        for i in subconjunto:
+            for j in subconjunto:
+                acc += matriz[i][j]
+        
+        if acc > mejor_suma:
+            mejor_suma = acc
+            mejor_conjunto = set(subconjunto)
+    
+    # Pasar a 1-indexado como hacías vos
+    return {x + 1 for x in mejor_conjunto}
+
 def maxiSubconjunto_posta(matriz:list[list[int]], I:set[int], inicio:int, n:int, k:int, I_mejor_actual:set[int], sum_mejor_actual:int)->tuple[set, int]:
     
     if k == 0:
@@ -283,8 +305,68 @@ matriz = [
     [10, 5, 0, 1],
     [1, 2, 1, 0]
 ]
-k = 3
-input(maxiSubconjunto(matriz, k)) 
+# k = 3
+# input(maxiSubconjunto(matriz, k)) 
+
+def rutaMinima_fuerza_bruta_posta(matriz, n, pi_parc, largo_pi_parc):
+    
+    # caso base: permutación completa
+    if largo_pi_parc == n:
+        costo = 0
+        for i in range(n-1):
+            costo += matriz[pi_parc[i]][pi_parc[i+1]]
+        costo += matriz[pi_parc[n-1]][pi_parc[0]]
+        return costo
+
+    mejor = float('inf')
+
+    for i in range(n):
+        if i not in pi_parc:
+            pi_parc.append(i)
+            costo = rutaMinima_fuerza_bruta_posta(matriz, n, pi_parc, largo_pi_parc + 1)
+            mejor = min(mejor, costo)
+            pi_parc.pop()
+
+    return mejor
+
+def rutaMinima_fuerza_bruta(matriz):
+    return rutaMinima_fuerza_bruta_posta(matriz, len(matriz), [], 0)
+
+def rutaMinima_posta(matriz:list[list[int]], n:int, pi_parc:list[int], largo_pi_parc:int, costo_pi_parc:int, mejor_encontrado:int, minimo_absoluto:int)->int:
+
+    if largo_pi_parc == n:
+        costo_pi_parc += matriz[pi_parc[n-1]][pi_parc[0]]
+        return costo_pi_parc
+
+    if minimo_absoluto * (n-largo_pi_parc+1) + costo_pi_parc >= mejor_encontrado:
+        return mejor_encontrado
+    
+    for i in range(n):
+        if i not in pi_parc:
+            nuevo_costo = costo_pi_parc
+            if largo_pi_parc > 0:
+                nuevo_costo += matriz[pi_parc[largo_pi_parc-1]][i]
+
+            pi_parc.append(i)
+            mejor_encontrado = min(mejor_encontrado, rutaMinima_posta(matriz, n, pi_parc, largo_pi_parc +1, nuevo_costo, mejor_encontrado, minimo_absoluto))
+            pi_parc.pop()
+    
+    return mejor_encontrado
+
+def rutaMinima(matriz:list[list[int]])->int:
+    minimo_absoluto:int = inf
+    for fila in matriz:
+        minimo_absoluto = min(minimo_absoluto, min(fila))
+    return rutaMinima_posta(matriz, len(matriz), [], 0, 0, inf, minimo_absoluto)
+
+# matriz = [
+#     [0, 1, 10, 10],
+#     [10, 0, 3, 15],
+#     [21, 17, 0, 2],
+#     [3, 22, 30, 0]
+# ]
+
+# input(rutaMinima_fuerza_bruta(matriz))
 
 def testear_todo(cant_test_por_ejercicio:int = 100):
 
@@ -311,9 +393,64 @@ def testear_todo(cant_test_por_ejercicio:int = 100):
             if not paso:
                 return False
         return True
+    
+    def t_maxiSubconjunto():
+
+        for _ in range(cant_test_por_ejercicio):
+            n:int = randint(1, randint(2, 25))
+            k:int = randint(1, n+1)
+            matriz:list[list[int]] = [[0]*n for _ in range(n)]
+            for i in range(n):
+                for j in range(i, n):  # solo mitad superior
+                    valor = randint(1, 1000)
+                    matriz[i][j] = valor
+                    matriz[j][i] = valor  # reflejo
+            res_bruto:set = maxiSubconjunto_bruto(matriz,k)
+            res_ejer:set = maxiSubconjunto(matriz, k)
+
+            suma_bruta:int = 0
+            for valor in res_bruto:
+                for valor_2 in res_bruto:
+                    suma_bruta += matriz[valor-1][valor_2-1]
+            
+            suma_ejer:int = 0
+            for valor in res_ejer:
+                for valor_2 in res_ejer:
+                    suma_ejer += matriz[valor-1][valor_2-1]
+            
+            paso:bool = suma_ejer - suma_bruta == 0
+            if not paso:
+                return False
+        
+        return True
+    
+    def t_rutaMinima():
+        for _ in range(cant_test_por_ejercicio):
+            n:int = randint(1, 9)
+            matriz = []
+            for i in range(n):
+                fila:list[int] = []
+                for j in range(n):
+                    if i == j:
+                        fila.append(0)
+                    else:
+                        fila.append(randint(1, 100))
+                matriz.append(fila)
+            
+            res_bruto:int = rutaMinima_fuerza_bruta(matriz)
+            res_ejer:int = rutaMinima(matriz)
+
+            paso:bool = res_bruto == res_ejer
+
+            if not paso:
+                return False
+        
+        return True
 
     tests:list[Callable] = [
         t_contarMagiCuadrados,
+        t_maxiSubconjunto,
+        t_rutaMinima
         ]
 
     print(divisor_en)
