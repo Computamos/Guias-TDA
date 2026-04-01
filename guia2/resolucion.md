@@ -640,4 +640,12 @@ Finalmente, como el algoritmo computa lo pedido y termina, entonces es correcto.
 
 # Ejercicio 6
 
+Siento que a este ejercicio le falta decir que también nos dan al árbol de búsqueda óptimo, no me parece trivial que podemos asumir que lo tenemos.
+
 1. 
+
+$costos(A, nodo, prof, f) = \begin{cases}
+0 & \text{si } nodo = \empty \\
+prof * f(nodo.valor) + costos(A, nodo.izq, prof + 1, f) + costos(A, nodo.der, prof + 1, f) &  \text{c.c} 
+\end{cases}
+$
