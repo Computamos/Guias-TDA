@@ -603,3 +603,41 @@ def rutaMinima(matriz:list[list[int]])->int:
         minimo_absoluto = min(minimo_absoluto, min(fila))
     return rutaMinima_posta(matriz, len(matriz), [], 0, 0, inf, minimo_absoluto)
 ```
+
+# Ejercicio 5
+
+1. Se me ocurre en hacer algo del estilo: "lo mejor de usar este char o no usarlo".
+
+$PalabrasEnCadena(cadena, i, j) = \begin{cases}
+True & \text{si } i=|cadena| \land j\geq|cadena| \\
+False & \text{si } i \lt |cadena| \land j \geq |cadena| \\
+PalabrasEnCadena(cadena, i, j+1) & \text{si } \neg palabra(cadena[i:j]) \\
+PalabrasEnCadena(cadena, i, j+1) \lor PalabrasEnCadena(cadena, j, j+1) & \text{c.c} \\
+\end{cases}
+$
+
+2. Si definimos a $n=|cadena|$ entonces la cota superior sería $O(2^n)$ pues en un caso donde tengamos que toda subcadena de `cadena` siempre forme una palabra tomando o no la cantidad de caracteres que queramos, entonces el algoritmo generaría dos ramas de nodos de estados para cada desición entre `usar o no el j-ésimo char` y -como sabemos que $O(palabra) = O(|c|)$ entonces tendríamos que aplicar una operación lineal para cada uno de los nodos de cada rama que salga del nodo inicial (para cada caracter de la subcadena en cuestión), finalmente se puede concluir que $O(2^n)$ es una cota superior para $PalabrasEnCadena$.
+
+3. 
+
+**Demostración por construcción:**
+
+El algoritmo evalúa en cada instancia si la cadena de entrada entre los índices `i` y `j` puede formar una palabra o no, en caso de que no pueda formar una palabra entonces evalúa la subcadena de $cadena$ que tiene largo $j+1-i$, es decir, la subcadena resultante de usar un caracter más de $cadena$; en caso de que sí se pueda formar una cadena entre los índices `i` y `j` entonces el algoritmo evalúa los dos casos posibles entre :
+* Tomar la palabra dentro del rango $i-j$ y evaluar la formación de una palabra con la subcadena contigua después de la palabra que se puede formar.
+* No tomar la palabra dentro del rango $i-j$ y seguir buscando formar una subcadena que sea palabra tomando el caracter siguiente al j-ésimo caracter de $cadena$.
+
+En otras palabras, el algoritmo evalúa cada posible formación de subcadenas de $cadena$ usando al j-ésimo caracter pues llama a la evaluación de ambos casos durante la recursión.
+
+Dado el caso en que el algoritmo logró formar una palabra y ya no tiene más índices para seguir evaluando (o lo mismo que ver que el índice "base" de comparación -nuestro `i`- tiene un valor mayor al largo de $cadena$), entonces el algoritmo devuelve $True$ porque la única manera de generar una instancia de este tipo es que existe una combinación de subcadenas de $cadena$ en el rango $[0; i)$ tal que todas eran palabras (pues el algoritmo solo es capaz de incrementar a `i` en el caso de que la subcadena en el rango $i-j$ era palabra), como $i=|cadena|$ entonces pudimos formar palabras usando todos los caracteres de $cadena$ en el rango $[0; |cadena|]$
+
+Si no existía una manera de obtener una palabra en el rango $i-j$ y $j \gt |cadena|$ entonces el algoritmo devuelve correctamene $False$, porque significa que llegó a un caso donde no puede formar ninguna palabra de $cadena$ aún usando todos los caracteres restantes de $cadena$.
+
+Como el algoritmo evalúa la disyuntoria entre cada caso recursivo y el elemento neutro de la disyuntoria es el $False$ y la función de disyunción solo es capaz de evaluar valores booleanos, entonces no estaríamos perdiendo soluciones porque: el algoritmo solo aumenta `i` y `j` estratégicamente para probar cada "corte" o subcadena de $cadena$ que se pueda armar y cada caso posible nos devuelve un booleano. Al obtener un $True$ la disyuntoria pasa a vale $True$ por lógica booleana.
+
+Como el índice j está limitado por $|cadena|$ entonces el algoritmo termina.
+
+Finalmente, como el algoritmo computa lo pedido y termina, entonces es correcto.
+
+# Ejercicio 6
+
+1. 
